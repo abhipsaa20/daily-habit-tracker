@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#F5F4F0">
+<meta name="description" content="Daily task tracker with monthly calendar view">
+<title>Daily Tracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #F5F4F0;
+  --surface: #FFFFFF;
+  --surface-2: #EEEDE9;
+  --text: #1C1B18;
+  --text-2: #7A7974;
+  --text-3: #AEADA9;
+  --border: rgba(28,27,24,0.09);
+  --border-2: rgba(28,27,24,0.16);
+  --accent: #3D7A5E;
+  --accent-bg: #EBF4EE;
+  --accent-text: #2A5C45;
+  --today-ring: #1C1B18;
+  --font: 'DM Sans', system-ui, -apple-system, sans-serif;
+  --r: 10px;
+  --r-lg: 16px;
+  --r-xl: 20px;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #181816;
+    --surface: #222220;
+    --surface-2: #2A2A28;
+    --text: #EEEDE9;
+    --text-2: #8A8A86;
+    --text-3: #4E4E4C;
+    --border: rgba(238,237,233,0.07);
+    --border-2: rgba(238,237,233,0.13);
+    --accent: #52A07A;
+    --accent-bg: #1A2E24;
+    --accent-text: #7DC4A0;
+    --today-ring: #EEEDE9;
+    --theme-color: #181816;
+  }
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+html,body{height:100%;}
+body{
+  font-family:var(--font);background:var(--bg);color:var(--text);
+  max-width:480px;margin:0 auto;
+  padding-top:env(safe-area-inset-top);
+  padding-bottom:env(safe-area-inset-bottom);
+  min-height:100vh;
+}
+
+/* ── Header ── */
+.app-header{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:20px 20px 0;
+}
+.app-name{font-size:12px;font-weight:600;color:var(--text-3);letter-spacing:0.08em;text-transform:uppercase;}
+.header-sel{
+  height:30px;padding:0 8px;border-radius:var(--r);
+  border:1px solid var(--border-2);background:var(--surface);
+  color:var(--text);font-size:12px;font-family:var(--font);
+  cursor:pointer;outline:none;
+}
+
+/* ── Month nav ── */
+.month-nav{
+  display:flex;align-items:center;gap:10px;
+  padding:14px 20px 10px;
+}
+.month-title{font-size:24px;font-weight:600;color:var(--text);flex:1;line-height:1.2;}
+.nav-btn{
+  width:34px;height:34px;border-radius:var(--r);
+  border:1px solid var(--border-2);background:var(--surface);
+  color:var(--text);font-size:18px;display:flex;align-items:center;
+  justify-content:center;cursor:pointer;flex-shrink:0;transition:background 0.1s;
+}
+.nav-btn:hover{background:var(--surface-2);}
+.nav-btn:active{transform:scale(0.94);}
+
+/* ── Stats ── */
+.stats{
+  display:grid;grid-template-columns:repeat(3,1fr);
+  gap:8px;padding:0 20px 16px;
+}
+.stat{
+  background:var(--surface);border-radius:var(--r);
+  padding:10px 12px;border:1px solid var(--border);
+}
+.stat-lbl{font-size:11px;color:var(--text-2);margin-bottom:2px;}
+.stat-val{font-size:19px;font-weight:600;color:var(--text);}
+
+/* ── Calendar ── */
+.cal{padding:0 20px;}
+.cal-head{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin-bottom:3px;}
+.ch{text-align:center;font-size:11px;font-weight:500;color:var(--text-3);padding:3px 0;}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;}
+.day{
+  aspect-ratio:1;border-radius:var(--r);
+  border:1px solid var(--border);background:var(--surface);
+  padding:5px 4px;cursor:pointer;display:flex;
+  flex-direction:column;user-select:none;
+  transition:border-color 0.12s,background 0.12s;
+  -webkit-user-select:none;
+}
+.day:hover{border-color:var(--border-2);}
+.day:active{transform:scale(0.95);}
+.day.empty{background:transparent;border-color:transparent;cursor:default;pointer-events:none;}
+.day.future{opacity:0.3;cursor:default;pointer-events:none;}
+.day.allDone{background:var(--accent-bg);border-color:var(--accent);}
+.day.today{border:2px solid var(--today-ring);}
+.day.today.allDone{border:2px solid var(--today-ring);}
+.day.selected{border:2px solid var(--accent);}
+.day-n{font-size:11px;font-weight:500;color:var(--text-2);line-height:1;margin-bottom:3px;}
+.day.today .day-n{color:var(--text);font-weight:700;}
+.day-dots{display:flex;flex-wrap:wrap;gap:2px;}
+.dot{width:5px;height:5px;border-radius:50%;background:var(--border-2);}
+.dot.on{background:var(--accent);}
+.day.today .dot.on{background:var(--today-ring);}
+
+/* ── Manage tasks collapsible ── */
+.manage{
+  margin:16px 20px 0;background:var(--surface);
+  border-radius:var(--r-lg);border:1px solid var(--border);overflow:hidden;
+}
+.manage-hd{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:14px 16px;cursor:pointer;user-select:-webkit-user-select;user-select:none;
+}
+.manage-hd-l{font-size:14px;font-weight:500;color:var(--text);}
+.manage-hd-r{display:flex;align-items:center;gap:8px;}
+.task-badge{
+  font-size:11px;color:var(--text-2);
+  background:var(--surface-2);padding:2px 8px;
+  border-radius:20px;
+}
+.chevron{font-size:18px;color:var(--text-3);transition:transform 0.2s;display:inline-block;}
+.chevron.open{transform:rotate(180deg);}
+.manage-bd{padding:0 16px 14px;display:none;}
+.manage-bd.open{display:block;}
+.add-row{display:flex;gap:8px;margin-bottom:8px;}
+.add-inp{
+  flex:1;height:36px;padding:0 10px;
+  border-radius:var(--r);border:1px solid var(--border-2);
+  background:var(--bg);color:var(--text);font-size:13px;
+  font-family:var(--font);outline:none;
+}
+.add-inp:focus{border-color:var(--accent);}
+.add-inp::placeholder{color:var(--text-3);}
+.add-btn{
+  height:36px;padding:0 14px;border-radius:var(--r);border:none;
+  background:var(--text);color:var(--bg);
+  font-size:13px;font-family:var(--font);font-weight:600;cursor:pointer;
+}
+.add-btn:hover{opacity:0.87;}
+.add-btn:active{transform:scale(0.96);}
+.task-rows{display:flex;flex-direction:column;gap:2px;}
+.task-row{
+  display:flex;align-items:center;gap:8px;
+  padding:7px 8px;border-radius:8px;font-size:13px;color:var(--text);
+}
+.task-row:hover{background:var(--bg);}
+.task-row span{flex:1;}
+.del{
+  background:none;border:none;cursor:pointer;color:var(--text-3);
+  font-size:15px;padding:2px 4px;display:flex;align-items:center;
+  opacity:0;transition:opacity 0.1s;border-radius:4px;
+}
+.task-row:hover .del{opacity:1;}
+.del:hover{color:var(--text-2);background:var(--surface-2);}
+.empty-msg{font-size:13px;color:var(--text-3);padding:4px 0;}
+
+.bottom-pad{height:48px;}
+
+/* ── Bottom sheet overlay ── */
+.overlay{
+  position:fixed;inset:0;background:rgba(0,0,0,0.45);
+  z-index:100;display:flex;flex-direction:column;
+  justify-content:flex-end;
+  animation:fadeIn 0.15s ease;
+}
+.sheet{
+  background:var(--surface);
+  border-radius:var(--r-xl) var(--r-xl) 0 0;
+  padding:16px 20px;padding-bottom:calc(24px + env(safe-area-inset-bottom));
+  max-height:75vh;overflow-y:auto;
+  animation:slideUp 0.22s cubic-bezier(0.25,0.46,0.45,0.94);
+}
+.sheet-handle{
+  width:38px;height:4px;border-radius:2px;
+  background:var(--border-2);margin:0 auto 16px;
+}
+.sheet-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
+.sheet-title{font-size:16px;font-weight:600;color:var(--text);}
+.sheet-actions{display:flex;gap:6px;}
+.sm-btn{
+  height:28px;padding:0 10px;border-radius:6px;
+  border:1px solid var(--border-2);background:transparent;
+  color:var(--text-2);font-size:12px;font-family:var(--font);
+  cursor:pointer;transition:background 0.1s;
+}
+.sm-btn:hover{background:var(--surface-2);color:var(--text);}
+.sm-btn:active{transform:scale(0.96);}
+.sheet-tasks{display:flex;flex-direction:column;gap:8px;}
+.st{
+  display:flex;align-items:center;gap:12px;
+  padding:12px 14px;border-radius:var(--r);
+  border:1px solid var(--border);background:var(--bg);
+  cursor:pointer;transition:background 0.1s;
+}
+.st:hover{background:var(--surface-2);}
+.st:active{transform:scale(0.99);}
+.st.done .st-name{text-decoration:line-through;color:var(--text-3);}
+.chk{
+  width:22px;height:22px;border-radius:50%;
+  border:1.5px solid var(--border-2);display:flex;
+  align-items:center;justify-content:center;flex-shrink:0;
+  transition:all 0.15s;background:transparent;
+}
+.st.done .chk{background:var(--accent);border-color:var(--accent);}
+.chk-tick{display:none;color:#fff;font-size:13px;line-height:1;}
+.st.done .chk-tick{display:block;}
+.st-name{font-size:14px;color:var(--text);flex:1;line-height:1.4;}
+.no-tasks-hint{font-size:13px;color:var(--text-3);text-align:center;padding:20px 0;}
+.done-banner{
+  text-align:center;padding:10px 0 4px;
+  font-size:13px;color:var(--accent-text);font-weight:500;
+}
+
+@keyframes fadeIn{from{opacity:0;}to{opacity:1;}}
+@keyframes slideUp{from{transform:translateY(40px);opacity:0;}to{transform:translateY(0);opacity:1;}}
+.sync-pill{font-size:11px;padding:3px 9px;border-radius:20px;font-weight:500;transition:all 0.3s;}
+.sync-loading,.sync-saving{background:var(--surface-2);color:var(--text-3);}
+.sync-saved{background:var(--accent-bg);color:var(--accent-text);}
+.sync-error{background:#FEE2E2;color:#B91C1C;}
+.loading-screen{position:fixed;inset:0;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;z-index:200;transition:opacity 0.3s;}
+.loading-screen.hidden{opacity:0;pointer-events:none;}
+.loading-title{font-size:14px;font-weight:500;color:var(--text-2);}
+.loading-dot{width:8px;height:8px;border-radius:50%;background:var(--accent);animation:pulse 1.2s ease-in-out infinite;}
+@keyframes pulse{0%,100%{opacity:0.3;transform:scale(0.8);}50%{opacity:1;transform:scale(1.2);}}
+</style>
+</head>
+<body>
+
+<div class="loading-screen" id="loading-screen">
+  <div class="loading-dot"></div>
+  <div class="loading-title">Loading your data...</div>
+</div>
+
+<div class="app-header">
+  <span class="app-name">Daily Tracker</span>
+  <div style="display:flex;align-items:center;gap:8px;">
+    <span class="sync-pill sync-loading" id="sync-status">Loading...</span>
+    <select class="header-sel" id="month-select" aria-label="Jump to month"></select>
+  </div>
+</div>
+
+<div class="month-nav">
+  <div class="month-title" id="month-title"></div>
+  <button class="nav-btn" id="prev-btn" aria-label="Previous month">&#8249;</button>
+  <button class="nav-btn" id="next-btn" aria-label="Next month">&#8250;</button>
+</div>
+
+<div class="stats">
+  <div class="stat"><div class="stat-lbl">This month</div><div class="stat-val" id="s-pct">—</div></div>
+  <div class="stat"><div class="stat-lbl">Streak</div><div class="stat-val" id="s-streak">0</div></div>
+  <div class="stat"><div class="stat-lbl">Perfect days</div><div class="stat-val" id="s-perfect">0</div></div>
+</div>
+
+<div class="cal">
+  <div class="cal-head" id="cal-head"></div>
+  <div class="cal-grid" id="cal-grid"></div>
+</div>
+
+<div class="manage">
+  <div class="manage-hd" onclick="toggleManage()" role="button" aria-expanded="false" id="manage-hd">
+    <span class="manage-hd-l">Manage tasks</span>
+    <div class="manage-hd-r">
+      <span class="task-badge" id="task-badge">0 tasks</span>
+      <span class="chevron" id="chevron">&#8964;</span>
+    </div>
+  </div>
+  <div class="manage-bd" id="manage-bd">
+    <div class="add-row">
+      <input class="add-inp" type="text" id="task-inp" placeholder="New task…" maxlength="60" autocomplete="off">
+      <button class="add-btn" onclick="addTask()">Add</button>
+    </div>
+    <div class="task-rows" id="task-rows"></div>
+  </div>
+</div>
+
+<div class="bottom-pad"></div>
+<div id="sheet-root"></div>
+
+<script>
+const MN = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+const DS = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+const TODAY = (() => { const d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); })();
+
+// ── Supabase config ──
+const SB_URL = 'https://efsvbskskifshnrbpcxb.supabase.co';
+const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVmc3Zic2tza2lmc2hucmJwY3hiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgzODU0NTIsImV4cCI6MjA5Mzk2MTQ1Mn0._9FmsDO9CeJrSBbzCxnQxBugzz4QChC4OXaUeCziJJM';
+const ROW_ID = 'default';
+const SB_HEADERS = { 'apikey': SB_KEY, 'Authorization': `Bearer ${SB_KEY}`, 'Content-Type': 'application/json' };
+
+let tasks=[], log={}, currentYM=TODAY.slice(0,7), selectedDay=null, manageOpen=false, syncTimer=null;
+
+const p2 = n => String(n).padStart(2,'0');
+const toYM  = d => d.getFullYear()+'-'+p2(d.getMonth()+1);
+const toYMD = d => toYM(d)+'-'+p2(d.getDate());
+const esc = s => s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+const daysIn = ym => { const[y,m]=ym.split('-').map(Number); return new Date(y,m,0).getDate(); };
+const firstDow = ym => { const[y,m]=ym.split('-').map(Number); return new Date(y,m-1,1).getDay(); };
+const dk = (ym,d) => ym+'-'+p2(d);
+const dl = k => log[k]||{};
+const isFuture = k => k > TODAY;
+const numDone = k => tasks.filter(t=>dl(k)[t.id]).length;
+const isAllDone = k => tasks.length > 0 && tasks.every(t=>dl(k)[t.id]);
+
+function setSync(state, text){
+  const el = document.getElementById('sync-status');
+  el.className = 'sync-pill sync-'+state;
+  el.textContent = text;
+}
+
+async function load(){
+  setSync('loading','Loading...');
+  try {
+    const res = await fetch(`${SB_URL}/rest/v1/tracker_data?id=eq.${ROW_ID}&select=*`, { headers: SB_HEADERS });
+    const data = await res.json();
+    if(Array.isArray(data) && data.length > 0){
+      tasks = data[0].tasks || [];
+      log   = data[0].log   || {};
+    }
+    setSync('saved','Synced');
+  } catch(e) {
+    setSync('error','Offline');
+  }
+  document.getElementById('loading-screen').classList.add('hidden');
+  buildSel();
+  render();
+}
+
+function save(){
+  setSync('saving','Saving...');
+  clearTimeout(syncTimer);
+  syncTimer = setTimeout(doSave, 800);
+}
+
+async function doSave(){
+  try {
+    const res = await fetch(`${SB_URL}/rest/v1/tracker_data`, {
+      method: 'POST',
+      headers: { ...SB_HEADERS, 'Prefer': 'resolution=merge-duplicates' },
+      body: JSON.stringify({ id: ROW_ID, tasks, log })
+    });
+    setSync(res.ok ? 'saved' : 'error', res.ok ? 'Saved' : 'Error');
+  } catch(e) {
+    setSync('error','Offline');
+  }
+}
+
+function buildSel(){
+  const sel = document.getElementById('month-select');
+  sel.innerHTML = '';
+  const now = new Date();
+  for(let i=-24; i<=6; i++){
+    const d = new Date(now.getFullYear(), now.getMonth()+i, 1);
+    const ym = toYM(d);
+    const o = document.createElement('option');
+    o.value = ym;
+    o.textContent = MN[d.getMonth()]+' '+d.getFullYear();
+    if(ym === currentYM) o.selected = true;
+    sel.appendChild(o);
+  }
+}
+
+function calcStreak(){
+  if(!tasks.length) return 0;
+  let s=0, d=new Date(TODAY);
+  while(true){
+    const k = toYMD(d);
+    if(k === TODAY){ if(isAllDone(k)) s++; d.setDate(d.getDate()-1); continue; }
+    if(!log[k] || !isAllDone(k)) break;
+    s++;
+    d.setDate(d.getDate()-1);
+  }
+  return s;
+}
+
+function calcMonthStats(ym){
+  if(!tasks.length) return {pct:null, perfect:0};
+  const days = daysIn(ym);
+  let tot=0, perfect=0, counted=0;
+  for(let d=1; d<=days; d++){
+    const k = dk(ym,d);
+    if(isFuture(k)) continue;
+    counted++;
+    const done = numDone(k);
+    tot += done/tasks.length;
+    if(done === tasks.length) perfect++;
+  }
+  return { pct: counted ? Math.round(tot/counted*100) : null, perfect };
+}
+
+function render(){
+  renderTitle();
+  renderCalHead();
+  renderGrid();
+  renderStats();
+  renderTaskRows();
+  document.getElementById('task-badge').textContent = tasks.length + (tasks.length===1?' task':' tasks');
+}
+
+function renderTitle(){
+  const[y,m] = currentYM.split('-').map(Number);
+  document.getElementById('month-title').textContent = MN[m-1]+' '+y;
+}
+
+function renderCalHead(){
+  document.getElementById('cal-head').innerHTML = DS.map(d=>`<div class="ch">${d}</div>`).join('');
+}
+
+function renderGrid(){
+  const total = daysIn(currentYM), start = firstDow(currentYM);
+  let html = '';
+  for(let i=0; i<start; i++) html += '<div class="day empty"></div>';
+  for(let d=1; d<=total; d++){
+    const k = dk(currentYM,d);
+    const future = isFuture(k);
+    const allDone = !future && isAllDone(k);
+    const isToday = k===TODAY;
+    const isSel = k===selectedDay;
+    let cls = 'day';
+    if(future) cls += ' future';
+    if(allDone) cls += ' allDone';
+    if(isToday) cls += ' today';
+    if(isSel) cls += ' selected';
+    const dayLog = dl(k);
+    const dots = tasks.slice(0,9).map(t=>`<div class="dot${dayLog[t.id]?' on':''}"></div>`).join('');
+    html += `<div class="${cls}" onclick="selectDay('${k}')" role="button" tabindex="0" aria-label="${k}">
+      <div class="day-n">${d}</div>
+      <div class="day-dots">${dots}</div>
+    </div>`;
+  }
+  document.getElementById('cal-grid').innerHTML = html;
+}
+
+function renderStats(){
+  const{pct,perfect} = calcMonthStats(currentYM);
+  document.getElementById('s-pct').textContent = pct===null ? '—' : pct+'%';
+  document.getElementById('s-streak').textContent = calcStreak();
+  document.getElementById('s-perfect').textContent = perfect;
+}
+
+function renderTaskRows(){
+  const el = document.getElementById('task-rows');
+  if(!tasks.length){ el.innerHTML = '<div class="empty-msg">No tasks yet — add one above</div>'; return; }
+  el.innerHTML = tasks.map(t=>`<div class="task-row">
+    <span>${esc(t.name)}</span>
+    <button class="del" onclick="deleteTask('${t.id}')" aria-label="Delete ${esc(t.name)}">&#x2715;</button>
+  </div>`).join('');
+}
+
+function selectDay(k){
+  if(isFuture(k)) return;
+  selectedDay = k;
+  renderGrid();
+  showSheet(k);
+}
+
+function showSheet(k){
+  const[,mo,d] = k.split('-');
+  const label = MN[parseInt(mo)-1]+' '+parseInt(d)+(k===TODAY?' · Today':'');
+  const dayLog = dl(k);
+  const allDone = tasks.length && tasks.every(t=>dayLog[t.id]);
+
+  let taskHtml = '';
+  if(!tasks.length){
+    taskHtml = '<div class="no-tasks-hint">Open "Manage tasks" below to add tasks</div>';
+  } else {
+    taskHtml = tasks.map(t => {
+      const done = !!dayLog[t.id];
+      return `<div class="st${done?' done':''}" onclick="toggleTask('${k}','${t.id}')">
+        <div class="chk"><span class="chk-tick">&#10003;</span></div>
+        <span class="st-name">${esc(t.name)}</span>
+      </div>`;
+    }).join('');
+    if(allDone) taskHtml += '<div class="done-banner">&#10003; All done for this day!</div>';
+  }
+
+  document.getElementById('sheet-root').innerHTML = `
+    <div class="overlay" id="overlay" onclick="handleOverlay(event)">
+      <div class="sheet">
+        <div class="sheet-handle"></div>
+        <div class="sheet-hd">
+          <div class="sheet-title">${label}</div>
+          <div class="sheet-actions">
+            ${tasks.length ? `<button class="sm-btn" onclick="markAll('${k}',true)">All done</button>
+            <button class="sm-btn" onclick="markAll('${k}',false)">Clear</button>` : ''}
+            <button class="sm-btn" onclick="closeSheet()" aria-label="Close">&#x2715;</button>
+          </div>
+        </div>
+        <div class="sheet-tasks">${taskHtml}</div>
+      </div>
+    </div>`;
+}
+
+function handleOverlay(e){ if(e.target.id==='overlay') closeSheet(); }
+
+function closeSheet(){
+  document.getElementById('sheet-root').innerHTML = '';
+  selectedDay = null;
+  renderGrid();
+}
+
+function toggleTask(k, id){
+  if(!log[k]) log[k]={};
+  log[k][id] = !log[k][id];
+  save(); renderGrid(); renderStats(); showSheet(k);
+}
+
+function markAll(k, done){
+  if(!log[k]) log[k]={};
+  tasks.forEach(t => log[k][t.id] = done);
+  save(); renderGrid(); renderStats(); showSheet(k);
+}
+
+function toggleManage(){
+  manageOpen = !manageOpen;
+  document.getElementById('manage-bd').classList.toggle('open', manageOpen);
+  document.getElementById('chevron').classList.toggle('open', manageOpen);
+  document.getElementById('manage-hd').setAttribute('aria-expanded', manageOpen);
+}
+
+function addTask(){
+  const inp = document.getElementById('task-inp');
+  const name = inp.value.trim();
+  if(!name) return;
+  tasks.push({id: Date.now().toString(36)+Math.random().toString(36).slice(2,5), name});
+  inp.value = '';
+  save(); render();
+  if(selectedDay) showSheet(selectedDay);
+}
+
+function deleteTask(id){
+  if(!confirm('Remove this task? Its history will be kept.')) return;
+  tasks = tasks.filter(t=>t.id!==id);
+  save(); render();
+  if(selectedDay) showSheet(selectedDay);
+}
+
+document.getElementById('task-inp').onkeydown = e => { if(e.key==='Enter') addTask(); };
+document.getElementById('prev-btn').onclick = () => {
+  const[y,m] = currentYM.split('-').map(Number);
+  currentYM = toYM(new Date(y,m-2,1));
+  document.getElementById('month-select').value = currentYM;
+  closeSheet(); render();
+};
+document.getElementById('next-btn').onclick = () => {
+  const[y,m] = currentYM.split('-').map(Number);
+  currentYM = toYM(new Date(y,m,1));
+  document.getElementById('month-select').value = currentYM;
+  closeSheet(); render();
+};
+document.getElementById('month-select').onchange = e => {
+  currentYM = e.target.value;
+  closeSheet(); render();
+};
+
+// Swipe down to dismiss sheet
+let touchStartY = 0;
+document.addEventListener('touchstart', e => { touchStartY = e.touches[0].clientY; }, {passive:true});
+document.addEventListener('touchend', e => {
+  if(e.changedTouches[0].clientY - touchStartY > 70 && selectedDay) closeSheet();
+}, {passive:true});
+
+// Keyboard nav for day cells
+document.addEventListener('keydown', e => {
+  if(e.key==='Escape' && selectedDay) closeSheet();
+});
+
+load();
+</script>
+</body>
+</html>
